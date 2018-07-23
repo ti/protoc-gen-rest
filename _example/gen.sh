@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # you can use docker instead of protoc commond
-#docker run --rm -v $(pwd):$(pwd) -w $(pwd) naresti/protoc --go_out=plugins=grpc:. --grpc-gateway_out=logtostderr=false:. --rest_out=plugins=rest:.   -I. pb/*.proto
+#docker run --rm -v $(pwd):$(pwd) -w $(pwd) nanxi/protoc:lite --go_out=plugins=grpc:. --grpc-gateway_out=logtostderr=false:. --rest_out=plugins=rest:.   -I. pb/*.proto
 
 protoc -I/usr/local/include -I. \
   -I$GOPATH/src \
