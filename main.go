@@ -50,26 +50,46 @@ func main() {
 		}
 		g.Response.File[i].Name = &rename
 		content := *g.Response.File[i].Content
-		p0, p1 := strings.Index(content,`import`),  strings.Index(content,`import (`)
+
+		p0 := strings.Index(content,`import`)
+		lTmp := len("import")
+		p1 := strings.Index(content[p0+lTmp:],`import (`) + p0 + lTmp
+		p2 := strings.Index(content[p1:],`\n`) + p1 + len(`import (`) + 1
+		pkgImports := content[p2: strings.Index(content,`// Reference imports`)]
+		firstInex := strings.Index(content,`//Start Services`) + 16
+		lastInex :=  strings.Index(content,`//End Services`)
+		serviceContent :=  content[firstInex:lastInex]
+
 		var genImports string
 		imports := content[p0:p1]
 		scanner := bufio.NewScanner(strings.NewReader(imports))
 		for scanner.Scan() {
 			text := scanner.Text()
-			if strings.Index(text," proto ") > 0 {
+			if strings.Index(text,"proto ") > 0 {
 				continue
 			}
-			if strings.Index(text,".") > 0 {
-				genImports += "\n" + scanner.Text()
+			if strings.Index(text,"_ ") > 0 {
+				continue
+			}
+			if strings.Index(text,".") <= 0 {
+				continue
+			}
+			// check if the packageName is used
+			var packageName string
+			if blankIndex := strings.Index(text, " "); blankIndex > 0 {
+				packageName = strings.Replace(text[0:blankIndex], "\t", "",1)
+			} else {
+				if i := strings.LastIndex(text, "/"); i > 0 {
+					packageName = text[i+1:]
+				}
+			}
+			if packageName != "" {
+				if strings.Contains(serviceContent, "*" + packageName + ".") {
+					genImports += "\n" + text
+				}
 			}
 		}
-		genImports += "\n\n"
-
-		pkgImports := content[p1: strings.Index(content,`// Reference imports`)]
-
-		firstInex := strings.Index(content,`//Start Services`) + 16
-		lastInex :=  strings.Index(content,`//End Services`)
-		contentEnd :=content[0:p0]  + genImports + pkgImports +  content[firstInex:lastInex]
+		contentEnd :=content[0:p0]  + content[p1:p2] + genImports + pkgImports  + serviceContent
 		contentEnd = strings.Replace(contentEnd,"protoc-gen-go","protoc-gen-rest", -1)
 		g.Response.File[i].Content = &contentEnd
 	}
