@@ -1,11 +1,11 @@
 package main
 
 import (
-	"io/ioutil"
-	"os"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/protoc-gen-go/generator"
 	plugin "github.com/ti/protoc-gen-rest/rest"
+	"io/ioutil"
+	"os"
 	"strings"
 
 	"bufio"
@@ -58,8 +58,11 @@ func main() {
 		pkgImports := content[p2: strings.Index(content,`// Reference imports`)]
 		firstInex := strings.Index(content,`//Start Services`) + 16
 		lastInex :=  strings.Index(content,`//End Services`)
+		if firstInex >= lastInex || lastInex <= 0 || lastInex > len(content){
+			g.Response.File = append(g.Response.File[:i], g.Response.File[i+1:]...)
+			continue
+		}
 		serviceContent :=  content[firstInex:lastInex]
-
 		var genImports string
 		imports := content[p0:p1]
 		scanner := bufio.NewScanner(strings.NewReader(imports))
